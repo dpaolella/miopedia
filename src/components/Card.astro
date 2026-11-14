@@ -1,0 +1,16 @@
+---
+interface Props { tag: string; foot?: string }
+const { tag, foot } = Astro.props;
+---
+<div class="card">
+  <div class="tag">{tag}</div>
+  <div class="inner"><slot /></div>
+  {foot && <div class="foot">{foot}</div>}
+</div>
+<style>
+  .card { padding: 28px; border: 1px solid var(--grid); border-radius: 2px; background: var(--panel); }
+  .tag { font-family: var(--mono); font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--amber); margin-bottom: 16px; }
+  .inner { font-size: 15px; line-height: 1.65; opacity: 0.88; }
+  .inner :global(p) { margin: 0 0 12px; } .inner :global(p:last-child) { margin: 0; }
+  .foot { margin-top: 20px; padding-top: 16px; border-top: 1px dashed var(--grid); font-size: 13px; opacity: 0.7; }
+</style>

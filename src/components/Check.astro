@@ -1,0 +1,24 @@
+---
+// A question the reader should be able to answer now. Answer is hidden until asked for.
+// Good checks ask for a prediction or an explanation, not a recalled definition.
+interface Props { q: string }
+const { q } = Astro.props;
+---
+<details class="check">
+  <summary>
+    <span class="eyebrow">Check</span>
+    <span class="q">{q}</span>
+    <span class="reveal">Show answer</span>
+  </summary>
+  <div class="a"><slot /></div>
+</details>
+<style>
+  .check { border: 1px solid var(--grid); border-radius: 2px; background: var(--panel); margin: 0 0 24px; }
+  summary { list-style: none; cursor: pointer; padding: 20px 24px; display: flex; flex-direction: column; gap: 8px; }
+  summary::-webkit-details-marker { display: none; }
+  .q { font-size: 16px; line-height: 1.55; }
+  .reveal { font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; color: var(--amber); }
+  details[open] .reveal { display: none; }
+  .a { padding: 0 24px 20px; font-size: 15px; line-height: 1.65; opacity: 0.9; border-top: 1px dashed var(--grid); padding-top: 16px; margin-top: -4px; }
+  .a :global(p) { margin: 0 0 10px; } .a :global(p:last-child) { margin: 0; }
+</style>

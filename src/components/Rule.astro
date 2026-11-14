@@ -1,0 +1,11 @@
+---
+interface Props { when: string; then: string }
+const { when, then } = Astro.props;
+---
+<div class="rule"><div>{when}</div><div class="arrow">→</div><div class="then">{then}</div></div>
+<style>
+  .rule { display: grid; grid-template-columns: 1.2fr auto 1fr; gap: 20px; padding: 18px 0; border-bottom: 1px dashed var(--grid); align-items: center; font-size: 15px; }
+  .arrow { color: var(--amber); font-family: var(--mono); font-size: 18px; }
+  .then { color: var(--amber); font-style: italic; }
+  @media (max-width: 640px) { .rule { grid-template-columns: 1fr; gap: 4px; } .arrow { display: none; } }
+</style>

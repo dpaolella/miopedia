@@ -1,0 +1,84 @@
+---
+import Base from "../layouts/Base.astro";
+import { allExplainers, slugOf, url, DOMAIN_LABEL } from "../lib/site";
+
+const all = await allExplainers();
+const domains = Object.keys(DOMAIN_LABEL)
+  .map((d) => ({ d, items: all.filter((e) => e.data.domain === d) }))
+  .filter((g) => g.items.length > 0);
+const conceptCount = new Set(all.flatMap((e) => e.data.concepts)).size;
+---
+<Base title="Miopedia" description="A personal handbook of interactive technical explainers.">
+  <header class="hero">
+    <div class="wrap">
+      <div class="eyebrow">A personal handbook · {all.length} {all.length === 1 ? "explainer" : "explainers"} · {conceptCount} concepts</div>
+      <h1>Things I wanted to <em>actually</em> understand.</h1>
+      <p class="lede">Every page here started as a question. Each one is built to be played with, not just read — and each links back to whatever it stands on.</p>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <label class="filter">
+      <span class="eyebrow">Filter</span>
+      <input id="q" type="search" placeholder="title, concept, domain…" autocomplete="off" />
+    </label>
+
+    {domains.map(({ d, items }) => (
+      <section class="domain" data-group>
+        <h2><span>{DOMAIN_LABEL[d]}</span></h2>
+        <ul>
+          {items.map((e) => (
+            <li data-item data-text={[e.data.title, e.data.summary, DOMAIN_LABEL[d], ...e.data.concepts].join(" ").toLowerCase()}>
+              <a href={url(`/${slugOf(e.id)}`)}>
+                <span class="title">{e.data.title}{e.data.status === "draft" && <em> (draft)</em>}</span>
+                <span class="summary">{e.data.summary}</span>
+                <span class="concepts">{e.data.concepts.join(" · ")}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
+    ))}
+    <p id="empty" hidden>Nothing matches. Sounds like the next question.</p>
+  </main>
+</Base>
+
+<script>
+  const q = document.getElementById("q") as HTMLInputElement;
+  const empty = document.getElementById("empty")!;
+  q.addEventListener("input", () => {
+    const terms = q.value.toLowerCase().split(/\s+/).filter(Boolean);
+    let shown = 0;
+    document.querySelectorAll<HTMLElement>("[data-group]").forEach((group) => {
+      let any = false;
+      group.querySelectorAll<HTMLElement>("[data-item]").forEach((li) => {
+        const hit = terms.every((t) => li.dataset.text!.includes(t));
+        li.hidden = !hit;
+        any ||= hit;
+        if (hit) shown++;
+      });
+      group.hidden = !any;
+    });
+    empty.hidden = shown > 0;
+  });
+</script>
+
+<style>
+  main { padding-top: 48px; padding-bottom: 96px; }
+  .filter { display: flex; align-items: center; gap: 16px; border-bottom: 1px solid var(--grid); padding-bottom: 12px; }
+  .filter input {
+    flex: 1; min-width: 0; background: none; border: 0; outline: 0; color: var(--paper);
+    font-family: var(--serif); font-size: 18px; font-style: italic; padding: 8px 0;
+  }
+  .filter input::placeholder { color: var(--paper); opacity: 0.35; }
+  .filter:focus-within { border-bottom-color: var(--amber-dim); }
+  .domain h2 { display: flex; align-items: center; gap: 16px; font-size: 22px; font-style: italic; font-weight: 400; margin: 56px 0 8px; }
+  .domain h2::after { content: ""; flex: 1; height: 1px; background: var(--grid); }
+  ul { list-style: none; margin: 0; padding: 0; }
+  li a { display: grid; gap: 6px; padding: 22px 0; border-bottom: 1px dashed var(--grid); text-decoration: none; color: var(--paper); }
+  .title { font-size: 22px; font-weight: 400; letter-spacing: -0.01em; line-height: 1.25; }
+  li a:hover .title { color: var(--amber); }
+  .summary { max-width: var(--measure); opacity: 0.8; font-size: 15px; line-height: 1.6; }
+  .concepts { font-family: var(--mono); font-size: 11px; letter-spacing: 0.05em; color: var(--amber-dim); }
+  #empty { font-style: italic; opacity: 0.6; margin-top: 48px; }
+</style>

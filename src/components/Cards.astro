@@ -1,0 +1,7 @@
+---
+// Side-by-side cards: the "two things in tension" framing. Children are <Card>s.
+---
+<div class="cards"><slot /></div>
+<style>
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 24px; margin: 0 0 32px; }
+</style>

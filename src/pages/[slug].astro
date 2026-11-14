@@ -1,0 +1,85 @@
+---
+import { render } from "astro:content";
+import Base from "../layouts/Base.astro";
+import { mdxComponents } from "../components/mdx";
+import { allExplainers, slugOf, url, emphasise, DOMAIN_LABEL } from "../lib/site";
+
+export async function getStaticPaths() {
+  const all = await allExplainers();
+  return all.map((entry) => ({ params: { slug: slugOf(entry.id) }, props: { entry, all } }));
+}
+
+const { entry, all } = Astro.props;
+const { data } = entry;
+const slug = slugOf(entry.id);
+const { Content, headings } = await render(entry);
+const sections = headings.filter((h) => h.depth === 2);
+
+const bySlug = new Map(all.map((e) => [slugOf(e.id), e]));
+const resolve = (refs: { id: string }[]) => refs.map((r) => bySlug.get(slugOf(r.id))).filter(Boolean);
+const buildsOn = resolve(data.prerequisites);
+const related = resolve(data.related);
+// Backlinks are derived, never authored: anything that lists this page as a prerequisite.
+const leadsTo = all.filter((e) => e.data.prerequisites.some((p) => slugOf(p.id) === slug));
+const fmt = (d: Date) => d.toLocaleDateString("en-GB", { year: "numeric", month: "short", day: "numeric", timeZone: "UTC" });
+---
+<Base title={`${data.title} · Miopedia`} description={data.summary}>
+  <header class="hero">
+    <div class="wrap">
+      <div class="eyebrow">
+        <a href={url("/")}>Miopedia</a> · {DOMAIN_LABEL[data.domain]} · {fmt(data.updated ?? data.created)}
+        {data.status === "draft" && " · draft"}
+      </div>
+      <h1 set:html={emphasise(data.headline)} />
+      <p class="lede">{data.summary}</p>
+      <div class="hero-meta">
+        <nav>
+          <div class="eyebrow">Contents</div>
+          <ol>{sections.map((h) => <li><a href={`#${h.slug}`}>{h.text}</a></li>)}</ol>
+        </nav>
+        {buildsOn.length > 0 && (
+          <div>
+            <div class="eyebrow">Assumes you've read</div>
+            <ul>{buildsOn.map((e) => <li><a href={url(`/${slugOf(e.id)}`)}>{e.data.title}</a></li>)}</ul>
+          </div>
+        )}
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <article class="body">
+      <Content components={mdxComponents} />
+    </article>
+  </main>
+
+  <footer class="colophon">
+    <div class="wrap">
+      <div class="eyebrow">The question that started this</div>
+      <p class="asked">“{data.question}”</p>
+      <div class="links">
+        <div>
+          <div class="eyebrow">Builds on</div>
+          <ul>
+            {buildsOn.map((e) => <li><a href={url(`/${slugOf(e.id)}`)}>{e.data.title}</a></li>)}
+            {buildsOn.length === 0 && <li class="none">Nothing — this one starts from scratch.</li>}
+          </ul>
+        </div>
+        <div>
+          <div class="eyebrow">Leads to</div>
+          <ul>
+            {leadsTo.map((e) => <li><a href={url(`/${slugOf(e.id)}`)}>{e.data.title}</a></li>)}
+            {leadsTo.length === 0 && <li class="none">Nothing yet. Ask the next question.</li>}
+          </ul>
+        </div>
+        {related.length > 0 && (
+          <div>
+            <div class="eyebrow">Nearby</div>
+            <ul>{related.map((e) => <li><a href={url(`/${slugOf(e.id)}`)}>{e.data.title}</a></li>)}</ul>
+          </div>
+        )}
+      </div>
+      <p class="eyebrow" style="margin-top:56px"><a href={url("/")}>← All explainers</a></p>
+    </div>
+  </footer>
+</Base>

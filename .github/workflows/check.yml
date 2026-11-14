@@ -1,0 +1,18 @@
+name: Check
+
+on:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      # The build is the test: it validates every explainer's frontmatter
+      # against the schema and fails on any cross-link to a missing page.
+      - run: npm run build

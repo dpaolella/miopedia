@@ -1,0 +1,14 @@
+---
+// Inline link to another explainer: <Ref to="some-slug">link text</Ref>.
+// The build fails if the slug doesn't exist, so cross-links can't rot.
+import { getEntry } from "astro:content";
+import { url } from "../lib/site";
+interface Props { to: string }
+const { to } = Astro.props;
+const target = await getEntry("explainers", to);
+if (!target) throw new Error(`<Ref to="${to}"> points at an explainer that doesn't exist.`);
+---
+<a class="ref" href={url(`/${to}`)} title={target.data.title}><slot>{target.data.title}</slot><span aria-hidden="true">↗</span></a>
+<style>
+  .ref span { font-family: var(--mono); font-size: 0.75em; margin-left: 2px; }
+</style>

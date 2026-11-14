@@ -1,0 +1,95 @@
+---
+title: Why a linear program's answer lives at a corner
+headline: The answer is always at a *corner*.
+summary: A linear program has infinitely many feasible points, yet you only ever need to check a handful of them. The reason is geometric, and you can feel it by tilting a price vector.
+question: Why does the optimum of a linear program always end up at a vertex of the feasible region?
+domain: optimization
+concepts:
+  - linear program
+  - feasible region
+  - vertex optimality
+  - iso-objective lines
+  - degenerate ties
+prerequisites: []
+related: []
+created: 2026-11-14
+---
+import CornerLab from "./CornerLab.jsx";
+
+## Infinite choices, five candidates
+
+A small hybrid site has one hour to sell power: some wind, some gas. Three things limit it — there's only 6 MW of wind blowing, the gas unit tops out at 5 MW, and the grid connection carries 8 MW total. Any split that respects those limits is allowed. That's a whole region of the plane: infinitely many legal schedules.
+
+<Cards>
+  <Card tag="What it looks like" foot="A continuum. You could never list them.">
+    Every point inside the shaded shape is a valid schedule. 2.71 MW of wind and 1.4 MW of gas? Fine. So is every point next to it.
+  </Card>
+  <Card tag="What it actually is" foot="A shortlist. You could check it by hand.">
+    Whatever the prices are, one of the shape's five corners is a best answer. The other infinity of points never needs a look.
+  </Card>
+</Cards>
+
+That's the claim. It sounds too convenient to be true, so don't take it on trust — go and try to break it.
+
+## Try to make an interior point win
+
+<Lab title="Tilt the prices" try="Drag the amber arrow to change what wind and gas are worth. Then drag the blue point P anywhere inside the shape and try to beat the amber corner.">
+  <CornerLab client:visible />
+</Lab>
+
+Two things are worth noticing before moving on. First, the dashed amber line: every point on it earns exactly the same revenue, and it's always perpendicular to the price arrow. Finding the optimum is just sliding that line as far as it will go in the arrow's direction while it still touches the shape. Second, the blue arrow out of P never points anywhere surprising. It's the same direction no matter where P is.
+
+<Check q="Point the arrow at exactly 45°. The readout names two best corners. What is true of every point on the edge between them, and why?">
+  They all earn the same revenue. At 45° wind and gas are worth the same per MW, and that edge is the grid-connection limit, where wind + gas = 8. Trading a MW of one for a MW of the other along that edge changes nothing. The iso-revenue line is lying flat against the edge.
+</Check>
+
+## Why it has to be this way
+
+The whole argument is two moves, and you just did both of them with your finger.
+
+**Move one: walk until something stops you.** The objective is linear, so the direction of improvement is the same everywhere — that's the blue arrow never changing its mind. From any interior point you can take a step in that direction and do strictly better. So an interior point is never optimal. Keep walking and you hit a wall.
+
+**Move two: slide along the wall.** On a wall you can only move two ways, and revenue along a straight edge is a straight-line function of position. A straight line over a segment is highest at one end or the other — or it's flat, in which case both ends are as good as anything in between. Either way, slide to the better end. The end of an edge is a corner.
+
+<Note>
+In more dimensions it's the same two moves repeated: hit a face, slide within it until you hit a lower-dimensional face, and keep going until there's nowhere left to slide. **A linear objective can't peak in the middle of anything flat.**
+</Note>
+
+Written out, a linear program is
+
+$$
+\max_x \; c^\top x \quad \text{subject to} \quad Ax \le b.
+$$
+
+Here `c` is the price arrow, each row of `Ax ≤ b` is one wall, and the feasible region is whatever is left after every wall has had its say. Because each wall is a straight cut, the region is convex: no dents, no holes, nowhere for a walk to get trapped.
+
+## The fine print
+
+"The optimum is always at a corner" is the slogan. The true statement is slightly more careful, and the differences matter.
+
+**It's *a* corner, not *only* corners.** When prices line up exactly with an edge, every point on that edge is optimal. Solvers will still hand you a corner, which is why LP answers so often look oddly extreme — a unit flat out or switched off, rarely at 43%. That's the geometry talking, not a recommendation.
+
+**There has to be a best answer at all.** Delete the walls in the direction prices point and revenue grows forever: the problem is *unbounded*. Add walls that contradict each other and nothing is feasible. Neither case has an optimum, at a corner or anywhere else.
+
+**The shape needs corners.** A region like "x + y ≤ 8" on its own is a half-plane with no vertices. Real models don't have this problem, because variables come with bounds.
+
+<Check q="In the lab, point the arrow so both margins are negative. Where does the optimum go, and does the corner rule survive?">
+  It goes to (0, 0): sell nothing. That is still a corner — the one where the two "≥ 0" walls meet. The rule doesn't care whether the binding walls are physical limits or sign constraints.
+</Check>
+
+## What this buys you
+
+The corner rule is why linear programming is a tractable thing rather than a hopeless one. It turns a search over a continuum into a search over a finite list — and the simplex method is precisely "start at a corner, move to a neighbouring corner that's better, stop when none is."
+
+It's also why the answer tells you which limits matter. A corner is where walls meet, so at the optimum you can read off which constraints are binding. In the lab at 20°, the winner is (6, 2): wind is maxed and the grid connection is full, while gas capacity has slack. Relax the gas limit and nothing changes. Relax the grid limit and revenue moves. That observation, made precise, is duality.
+
+<Cheats>
+  <Rule when="The LP has a finite optimum and bounded variables" then="Some corner achieves it" />
+  <Rule when="The objective is parallel to an edge or face" then="A whole face is optimal; corners still are" />
+  <Rule when="The solver returns an 'all or nothing' schedule" then="That's vertex geometry, not insight" />
+  <Rule when="A constraint isn't touching the optimal corner" then="Loosening it buys nothing" />
+</Cheats>
+
+## The catch in the convenience
+
+Five corners is a shortlist. But a model with a few thousand constraints has more corners than there are atoms to count them with, so "just check the corners" stops being a plan almost immediately. What saves you isn't that the list is finite. It's that the list is *connected*: from any corner that isn't the best, some neighbouring corner is better, so you never need the list at all — only a way to take the next step. The corner rule tells you where to look. Convexity is what makes looking cheap.
